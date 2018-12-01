@@ -7,9 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "WTFPL",
   "dependencies": {
     "@alicloud/pop-core": "^1.7.1",
+    "assert": "^1.4.1",
     "got": "^9.3.2"
   }
 }

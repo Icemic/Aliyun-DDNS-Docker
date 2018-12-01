@@ -1,7 +1,13 @@
 const RPCClient = require('@alicloud/pop-core').RPCClient;
 const got = require('got');
+const assert = require('assert');
 
 const { AccessKeyId, AccessKeySecret, Domain, SubDomain, TTL = 5 * 60 * 1000 } = process.env;
+
+assert(AccessKeyId, `AccessKeyId cannot be empty.`);
+assert(AccessKeySecret, `AccessKeySecret cannot be empty.`);
+assert(Domain, `Domain cannot be empty.`);
+assert(SubDomain, `SubDomain cannot be empty.`);
 
 const client = new RPCClient({
   accessKeyId: AccessKeyId,
@@ -9,6 +15,10 @@ const client = new RPCClient({
   endpoint: 'https://alidns.aliyuncs.com',
   apiVersion: '2015-01-09'
 });
+
+function log(...args) {
+  console.log(`[${new Date().toLocaleString()}]`, ...args);
+}
 
 async function getIP() {
   const ret = await got('https://ddns.oray.com/checkip');
@@ -80,9 +90,9 @@ async function main(domain, rr, interval) {
   let ip;
   try {
     ip = await getIP();
-    console.log('当前公网IP', ip);
+    log('当前公网IP', ip);
   } catch (e) {
-    console.error(e.message);
+    log(e.message);
     return;
   }
 
@@ -93,7 +103,7 @@ async function main(domain, rr, interval) {
     for (const record of list.DomainRecords.Record) {
       if (record.DomainName === domain && record.RR === rr) {
         if (record.Value === ip) {
-          console.log('公网IP未变化');
+          log('公网IP未变化');
           return;
         }
         hasRecord = true;
@@ -105,21 +115,21 @@ async function main(domain, rr, interval) {
   try {
     let result;
     if (!hasRecord) {
-      console.log('当前无记录');
+      log('当前无记录');
       result = await add(domain, rr, ip);
     } else {
-      console.log('当前有记录', recordId);
+      log('当前有记录', recordId);
       result = await modify(recordId, rr, ip);
     }
     if (result.RequestId) {
-      console.log('设置成功', result.RequestId);
+      log('设置成功', result.RequestId);
     }
   } catch (e) {
-    console.error('设置失败');
+    log('设置失败');
     if (e.message.indexOf('DomainRecordDuplicateError')) {
-      console.error('[DomainRecordDuplicateError] 可能是公网IP并未发生变化');
+      log('[DomainRecordDuplicateError] 可能是公网IP并未发生变化');
     } else {
-      console.error(e.message);
+      log(e.message);
     }
   }
 }
@@ -128,8 +138,8 @@ async function tick() {
   try {
     await main(Domain, SubDomain)
   } catch (e) {
-    console.error('发生未知错误');
-    console.error(e);
+    log('发生未知错误');
+    log(e);
   }
   setTimeout(tick, TTL);
 }
