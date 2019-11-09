@@ -23,7 +23,7 @@ function log(...args) {
 async function getIP() {
   const ret = await got('https://ddns.oray.com/checkip');
   if (ret.statusCode === 200 && ret.body) {
-    const match = ret.body.match(/Current IP Address: (.+?)</);
+    const match = ret.body.match(/Current IP Address: (.+?)$/);
     if (match && match[1]) {
       return match[1].trim();
     }
